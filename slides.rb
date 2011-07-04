@@ -7,7 +7,7 @@ require File.join(here, 'graphics')
 SLIDE_WIDTH  = 1024
 SLIDE_HEIGHT = 768
 
-BLUR = 1.2
+BLUR = 0
 
 # there are a few problems with constants resolutions
 # on the last MacRuby anyway so just do it simple
@@ -47,18 +47,36 @@ class SlideView < NSView
     size = bounds.size
     ratio = [size.width/SLIDE_WIDTH, size.height/SLIDE_HEIGHT].min
 
-    Canvas.for_rendering(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
+    background = Canvas.for_rendering(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
       c.translate(size.width/2 - ((SLIDE_WIDTH/2) * ratio), size.height/2 - ((SLIDE_HEIGHT/2 * ratio)))
       c.scale(ratio)
       c.instance_eval(&slide_manager.current_slide)
-      applyFilterAndDrawToView(c.ciimage)
+      #applyFilterAndDrawToView(c.ciimage)
     end
 
-    Canvas.for_current_context(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
+    text = Canvas.for_rendering(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
       c.font "FedraSansDisStd HeavyCond", 200
       c.registration :center
+      CGContextSetTextDrawingMode(c.ctx, KCGTextFillStroke)
+      CGContextSetLineWidth(c.ctx, 2)
+      c.stroke Color.white
+      c.fill Color.black
+      c.shadow -5, -5
       c.text "Eloy Duran"
     end
+
+    blur = CIFilter.filterWithName("CIGaussianBlur")
+    blur.setDefaults
+    blur.setValue(BLUR, forKey:KCIInputRadiusKey)
+    blur.setValue(background.ciimage, forKey:KCIInputImageKey)
+
+    composite = CIFilter.filterWithName("CISourceOverCompositing")
+    composite.setDefaults
+    composite.setValue(blur.valueForKey(KCIOutputImageKey), forKey:KCIInputBackgroundImageKey)
+    composite.setValue(text.ciimage, forKey:KCIInputImageKey)
+
+    cicontext = CIContext.contextWithCGContext(NSGraphicsContext.currentContext.graphicsPort, options:nil)
+    cicontext.drawImage(composite.valueForKey(KCIOutputImageKey), atPoint:bounds.origin, fromRect:bounds)
   end
 
   def applyFilterAndDrawToView(ciimage)
@@ -101,8 +119,8 @@ slide_manager = SlideManager.new
 
 slide_manager.add_slide do
   # based on canvas_example.rb
-  background Color.black
-  white = Color.white
+  background Color.random
+  white = Color.random
   fill white
   stroke 0.2
   stroke_width 1
@@ -120,7 +138,7 @@ end
 
 slide_manager.add_slide do
   # based on drawing_iterate_example.rb
-  background Color.white
+  background Color.random
 
   # create a petal shape with base at (0,0), size 40×150, and bulge at 30px
   shape = Path.new
@@ -128,7 +146,7 @@ slide_manager.add_slide do
   # add a circle
   shape.oval(-10,20,20,20)
   # color it red
-  shape.fill Color.red
+  shape.fill Color.random
 
   # increment shape parameters by the specified amount each iteration,
   # or by a random value selected from the specified range
@@ -149,8 +167,8 @@ end
 
 slide_manager.add_slide do
   # based on spirograph_example.rb
-  background Color.beige
-  fill Color.black
+  background Color.random
+  fill Color.random
   font 'Book Antiqua'
   font_size 12
   translate SLIDE_WIDTH/2, SLIDE_HEIGHT/2
