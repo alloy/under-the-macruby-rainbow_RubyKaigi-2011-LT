@@ -571,9 +571,9 @@ module MRGraphics
       # not sure that's worth doing that here
       txt = txt.to_s
       if @registration == :center
-        width = textwidth(txt)
-        x = x - width / 2
-        y = y + @fsize / 2
+        width = text_width(txt)
+        x = ((@width - x) / 2) - (width / 2)
+        y = ((@height - y) / 2) - (@fsize / 2.8)
       end
       CGContextShowTextAtPoint(@ctx, x, y, txt, txt.length)
     end
