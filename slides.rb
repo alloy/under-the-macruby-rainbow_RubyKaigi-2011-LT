@@ -9,6 +9,14 @@ require File.join(here, 'graphics')
 SLIDE_WIDTH  = 1024
 SLIDE_HEIGHT = 768
 
+TEXT_RENDER_ATTRIBUTES = {
+  NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200),
+  NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
+  NSStrokeColorAttributeName     => NSColor.whiteColor,
+  NSForegroundColorAttributeName => NSColor.blackColor,
+  NSShadowAttributeName          => NSShadow.new.tap { |s| s.shadowOffset = NSMakeSize(5, -5); s.shadowBlurRadius = 5 }
+}
+
 # there are a few problems with constants resolutions
 # on the last MacRuby anyway so just do it simple
 include MRGraphics
@@ -41,23 +49,12 @@ class SlideView < NSView
 
   def drawRect(rect)
     Canvas.for_current_context(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
+      CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
       c.instance_eval(&slide_manager.current_slide)
       c.reset
     end
 
-    NSGraphicsContext.currentContext.saveGraphicsState
-    shadow = NSShadow.new
-    shadow.shadowOffset = NSMakeSize(5, -5)
-    shadow.shadowBlurRadius = 5
-    attributes = {
-      NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200),
-      NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
-      NSStrokeColorAttributeName     => NSColor.whiteColor,
-      NSForegroundColorAttributeName => NSColor.blackColor,
-      NSShadowAttributeName          => shadow
-    }
-    "Eloy Durán".drawAtPoint(NSMakePoint(0, 0), withAttributes:attributes)
-    NSGraphicsContext.currentContext.restoreGraphicsState
+    "Eloy Durán".drawAtPoint(NSMakePoint(0, 0), withAttributes:TEXT_RENDER_ATTRIBUTES)
   end
 
   def keyDown(key)
