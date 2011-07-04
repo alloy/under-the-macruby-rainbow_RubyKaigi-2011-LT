@@ -9,9 +9,12 @@ require File.join(here, 'graphics')
 SLIDE_WIDTH  = 1024
 SLIDE_HEIGHT = 768
 
+MARGIN = 20
+
 TEXT_RENDER_ATTRIBUTES = {
   NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200) ||
                                       NSFont.fontWithName("Helvetica Neue Condensed Black", size:200),
+  NSParagraphStyleAttributeName  => NSMutableParagraphStyle.new.tap { |p| p.alignment = NSCenterTextAlignment },
   NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
   NSStrokeColorAttributeName     => NSColor.whiteColor,
   NSForegroundColorAttributeName => NSColor.blackColor,
@@ -55,7 +58,7 @@ class SlideView < NSView
       c.reset
     end
 
-    "Eloy Durán".drawAtPoint(NSMakePoint(0, 0), withAttributes:TEXT_RENDER_ATTRIBUTES)
+    "Eloy Durán".drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:TEXT_RENDER_ATTRIBUTES)
   end
 
   def keyDown(key)
