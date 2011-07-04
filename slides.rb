@@ -6,9 +6,6 @@ framework 'Cocoa'
 here = File.expand_path(File.dirname(__FILE__))
 require File.join(here, 'graphics')
 
-SLIDE_WIDTH  = 1024
-SLIDE_HEIGHT = 768
-
 MARGIN = 20
 
 TEXT_RENDER_ATTRIBUTES = {
@@ -52,7 +49,7 @@ class SlideView < NSView
   attr_accessor :slide_manager
 
   def drawRect(rect)
-    Canvas.for_current_context(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
+    Canvas.for_current_context(:size => bounds.size) do |c|
       CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
       c.instance_eval(&slide_manager.current_slide)
       c.reset
@@ -67,10 +64,10 @@ class SlideView < NSView
       exit
     when KVK_LeftArrow
       slide_manager.previous_slide
-      setNeedsDisplay true
+      self.needsDisplay = true
     when KVK_RightArrow
       slide_manager.next_slide
-      setNeedsDisplay true
+      self.needsDisplay = true
     else
       case key.characters
       when "f"
@@ -82,7 +79,7 @@ class SlideView < NSView
         end
         @fullscreen = !@fullscreen
       when "r"
-        setNeedsDisplay true
+        self.needsDisplay = true
       end
     end
   end
@@ -103,9 +100,7 @@ slide_manager.add_slide do
     font_size rand(170)
     fill foregroundColor.copy.darken(rand(0.8))
     letters = %W{ m a c r u b y }
-    text(letters[rand(letters.size)],
-            rand(SLIDE_WIDTH),
-            rand(SLIDE_HEIGHT))
+    text(letters[rand(letters.size)], rand(width), rand(height))
   end
 end
 
@@ -134,7 +129,7 @@ slide_manager.add_slide do
   shape.increment(:alpha, -0.1..0.1)
 
   # draw 200 petals on the canvas
-  translate(SLIDE_WIDTH/2-150, SLIDE_HEIGHT/2+20)
+  translate(width/2-150, height/2+20)
   draw(shape,0,0,200)
 end
 
@@ -144,7 +139,7 @@ slide_manager.add_slide do
   fill Color.random
   font 'Book Antiqua'
   font_size 12
-  translate SLIDE_WIDTH/2, SLIDE_HEIGHT/2
+  translate width/2, height/2
 
   # rotate, draw text, repeat
   180.times do |frame|
@@ -158,7 +153,7 @@ slide_manager.add_slide do
   end
 end
 
-frame = [0.0, 0.0, SLIDE_WIDTH, SLIDE_HEIGHT]
+frame = NSScreen.mainScreen.visibleFrame
 app = NSApplication.sharedApplication
 app.setActivationPolicy NSApplicationActivationPolicyRegular
 app.activateIgnoringOtherApps true
