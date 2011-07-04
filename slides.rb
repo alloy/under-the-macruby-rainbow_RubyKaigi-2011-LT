@@ -48,12 +48,28 @@ end
 class SlideView < NSView
   attr_accessor :slide_manager
 
+  def viewWillStartLiveResize
+    @boundsBeforeResize = bounds
+    super
+  end
+
+  def viewDidEndLiveResize
+    @boundsBeforeResize = nil
+    super
+  end
+
+  # As a simple way to support smooth resizing we cache the result image and
+  # draw it scaled to the current bounds.
   def drawRect(rect)
-    Canvas.for_current_context(:size => bounds.size) do |c|
-      CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
-      c.instance_eval(&slide_manager.current_slide)
-      c.reset
+    unless inLiveResize
+      Canvas.for_rendering(:size => bounds.size) do |c|
+        CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
+        c.instance_eval(&slide_manager.current_slide)
+        @renderCache = c.ciimage
+      end
     end
+    cicontext = CIContext.contextWithCGContext(NSGraphicsContext.currentContext.graphicsPort, options:nil)
+    cicontext.drawImage(@renderCache, inRect:bounds, fromRect:@boundsBeforeResize || bounds)
 
     "Eloy Durán".drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:TEXT_RENDER_ATTRIBUTES)
   end
@@ -161,8 +177,8 @@ view = SlideView.alloc.initWithFrame(frame)
 view.slide_manager = slide_manager
 
 window = NSWindow.alloc.initWithContentRect(frame,
-        styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask, 
-        backing:NSBackingStoreBuffered, 
+        styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask|NSResizableWindowMask,
+        backing:NSBackingStoreBuffered,
         defer:false)
 window.contentView = view
 window.makeFirstResponder view
