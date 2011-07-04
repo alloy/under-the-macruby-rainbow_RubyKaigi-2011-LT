@@ -7,8 +7,6 @@ require File.join(here, 'graphics')
 SLIDE_WIDTH  = 1024
 SLIDE_HEIGHT = 768
 
-BLUR = 0
-
 # there are a few problems with constants resolutions
 # on the last MacRuby anyway so just do it simple
 include MRGraphics
@@ -43,49 +41,25 @@ class SlideView < NSView
     NSColor.blackColor.set
     NSRectFill(rect)
 
-    bounds = self.bounds
     size = bounds.size
     ratio = [size.width/SLIDE_WIDTH, size.height/SLIDE_HEIGHT].min
 
-    background = Canvas.for_rendering(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
-      c.translate(size.width/2 - ((SLIDE_WIDTH/2) * ratio), size.height/2 - ((SLIDE_HEIGHT/2 * ratio)))
-      c.scale(ratio)
-      c.instance_eval(&slide_manager.current_slide)
-      #applyFilterAndDrawToView(c.ciimage)
-    end
+    Canvas.for_current_context(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
+      c.new_state do
+        c.translate(size.width/2 - ((SLIDE_WIDTH/2) * ratio), size.height/2 - ((SLIDE_HEIGHT/2 * ratio)))
+        c.scale(ratio)
+        c.instance_eval(&slide_manager.current_slide)
+      end
 
-    text = Canvas.for_rendering(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
       c.font "FedraSansDisStd HeavyCond", 200
       c.registration :center
       CGContextSetTextDrawingMode(c.ctx, KCGTextFillStroke)
       CGContextSetLineWidth(c.ctx, 2)
       c.stroke Color.white
       c.fill Color.black
-      c.shadow -5, -5
+      c.shadow 5, -5
       c.text "Eloy Duran"
     end
-
-    blur = CIFilter.filterWithName("CIGaussianBlur")
-    blur.setDefaults
-    blur.setValue(BLUR, forKey:KCIInputRadiusKey)
-    blur.setValue(background.ciimage, forKey:KCIInputImageKey)
-
-    composite = CIFilter.filterWithName("CISourceOverCompositing")
-    composite.setDefaults
-    composite.setValue(blur.valueForKey(KCIOutputImageKey), forKey:KCIInputBackgroundImageKey)
-    composite.setValue(text.ciimage, forKey:KCIInputImageKey)
-
-    cicontext = CIContext.contextWithCGContext(NSGraphicsContext.currentContext.graphicsPort, options:nil)
-    cicontext.drawImage(composite.valueForKey(KCIOutputImageKey), atPoint:bounds.origin, fromRect:bounds)
-  end
-
-  def applyFilterAndDrawToView(ciimage)
-    blur = CIFilter.filterWithName("CIGaussianBlur")
-    blur.setDefaults
-    blur.setValue(BLUR, forKey:KCIInputRadiusKey)
-    blur.setValue(ciimage, forKey:KCIInputImageKey)
-    cicontext = CIContext.contextWithCGContext(NSGraphicsContext.currentContext.graphicsPort, options:nil)
-    cicontext.drawImage(blur.valueForKey(KCIOutputImageKey), atPoint:bounds.origin, fromRect:bounds)
   end
 
   def keyDown(key)
