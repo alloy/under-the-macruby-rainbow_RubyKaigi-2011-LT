@@ -10,7 +10,8 @@ SLIDE_WIDTH  = 1024
 SLIDE_HEIGHT = 768
 
 TEXT_RENDER_ATTRIBUTES = {
-  NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200),
+  NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200) ||
+                                      NSFont.fontWithName("Helvetica Neue Condensed Black", size:200),
   NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
   NSStrokeColorAttributeName     => NSColor.whiteColor,
   NSForegroundColorAttributeName => NSColor.blackColor,
