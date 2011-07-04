@@ -6,6 +6,8 @@ framework 'Cocoa'
 here = File.expand_path(File.dirname(__FILE__))
 require File.join(here, 'graphics')
 
+SLIDES = File.expand_path('../slides.md', __FILE__)
+
 MARGIN = 20
 
 TEXT_RENDER_ATTRIBUTES = {
@@ -23,9 +25,10 @@ TEXT_RENDER_ATTRIBUTES = {
 include MRGraphics
 
 class SlideManager
-  def initialize
+  def initialize(slides_file)
+    @slides = File.read(slides_file).split("\n").map(&:strip).reject(&:empty?)
     @current_slide = 0
-    @slides = []
+    @backgrounds = []
   end
 
   def next_slide
@@ -37,11 +40,20 @@ class SlideManager
   end
 
   def current_slide
-    @slides[@current_slide]
+    _current_slide[2..-1]
   end
 
-  def add_slide(&block)
-    @slides << block
+  def _current_slide
+    @slides[@current_slide]
+  end
+  private :_current_slide
+
+  def current_background
+    @backgrounds[@current_slide % @backgrounds.size]
+  end
+
+  def add_background(&block)
+    @backgrounds << block
   end
 end
 
@@ -64,14 +76,15 @@ class SlideView < NSView
     unless inLiveResize
       Canvas.for_rendering(:size => bounds.size) do |c|
         CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
-        c.instance_eval(&slide_manager.current_slide)
+        c.instance_eval(&slide_manager.current_background)
         @renderCache = c.ciimage
       end
     end
     cicontext = CIContext.contextWithCGContext(NSGraphicsContext.currentContext.graphicsPort, options:nil)
     cicontext.drawImage(@renderCache, inRect:bounds, fromRect:@boundsBeforeResize || bounds)
 
-    "Eloy Durán".drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:TEXT_RENDER_ATTRIBUTES)
+    text = slide_manager.current_slide
+    text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:TEXT_RENDER_ATTRIBUTES)
   end
 
   def keyDown(key)
@@ -101,9 +114,9 @@ class SlideView < NSView
   end
 end
 
-slide_manager = SlideManager.new
+slide_manager = SlideManager.new(SLIDES)
 
-slide_manager.add_slide do
+slide_manager.add_background do
   # based on canvas_example.rb
   background Color.random
   foregroundColor = Color.random
@@ -120,7 +133,7 @@ slide_manager.add_slide do
   end
 end
 
-slide_manager.add_slide do
+slide_manager.add_background do
   # based on drawing_iterate_example.rb
   background Color.random
 
@@ -149,7 +162,7 @@ slide_manager.add_slide do
   draw(shape,0,0,200)
 end
 
-slide_manager.add_slide do
+slide_manager.add_background do
   # based on spirograph_example.rb
   background Color.random
   fill Color.random
