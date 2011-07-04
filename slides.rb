@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # requires to be put in the same directory as https://github.com/drtoast/macruby_graphics
 
 framework 'Cocoa'
@@ -38,28 +40,24 @@ class SlideView < NSView
   attr_accessor :slide_manager
 
   def drawRect(rect)
-    NSColor.blackColor.set
-    NSRectFill(rect)
-
-    size = bounds.size
-    ratio = [size.width/SLIDE_WIDTH, size.height/SLIDE_HEIGHT].min
-
     Canvas.for_current_context(:size => [SLIDE_WIDTH, SLIDE_HEIGHT]) do |c|
-      c.new_state do
-        c.translate(size.width/2 - ((SLIDE_WIDTH/2) * ratio), size.height/2 - ((SLIDE_HEIGHT/2 * ratio)))
-        c.scale(ratio)
-        c.instance_eval(&slide_manager.current_slide)
-      end
-
-      c.font "FedraSansDisStd HeavyCond", 200
-      c.registration :center
-      CGContextSetTextDrawingMode(c.ctx, KCGTextFillStroke)
-      CGContextSetLineWidth(c.ctx, 2)
-      c.stroke Color.white
-      c.fill Color.black
-      c.shadow 5, -5
-      c.text "Eloy Duran"
+      c.instance_eval(&slide_manager.current_slide)
+      c.reset
     end
+
+    NSGraphicsContext.currentContext.saveGraphicsState
+    shadow = NSShadow.new
+    shadow.shadowOffset = NSMakeSize(5, -5)
+    shadow.shadowBlurRadius = 5
+    attributes = {
+      NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200),
+      NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
+      NSStrokeColorAttributeName     => NSColor.whiteColor,
+      NSForegroundColorAttributeName => NSColor.blackColor,
+      NSShadowAttributeName          => shadow
+    }
+    "Eloy Durán".drawAtPoint(NSMakePoint(0, 0), withAttributes:attributes)
+    NSGraphicsContext.currentContext.restoreGraphicsState
   end
 
   def keyDown(key)
@@ -94,15 +92,15 @@ slide_manager = SlideManager.new
 slide_manager.add_slide do
   # based on canvas_example.rb
   background Color.random
-  white = Color.random
-  fill white
+  foregroundColor = Color.random
+  fill foregroundColor
   stroke 0.2
   stroke_width 1
   font "Zapfino"
 
   80.times do
     font_size rand(170)
-    fill white.copy.darken(rand(0.8))
+    fill foregroundColor.copy.darken(rand(0.8))
     letters = %W{ m a c r u b y }
     text(letters[rand(letters.size)],
             rand(SLIDE_WIDTH),
