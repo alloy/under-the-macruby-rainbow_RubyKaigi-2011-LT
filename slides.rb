@@ -10,7 +10,7 @@ SLIDES = File.expand_path('../slides.md', __FILE__)
 
 MARGIN = 20
 
-TEXT_RENDER_ATTRIBUTES = {
+TEXT_ATTRS = {
   NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200) ||
                                       NSFont.fontWithName("Helvetica Neue Condensed Black", size:200),
   NSParagraphStyleAttributeName  => NSMutableParagraphStyle.new.tap { |p| p.alignment = NSCenterTextAlignment },
@@ -19,6 +19,11 @@ TEXT_RENDER_ATTRIBUTES = {
   NSForegroundColorAttributeName => NSColor.blackColor,
   NSShadowAttributeName          => NSShadow.new.tap { |s| s.shadowOffset = NSMakeSize(5, -5); s.shadowBlurRadius = 5 }
 }
+
+HEADING_ATTRS = TEXT_ATTRS.merge({
+  NSStrokeColorAttributeName => TEXT_ATTRS[NSForegroundColorAttributeName],
+  NSForegroundColorAttributeName => TEXT_ATTRS[NSStrokeColorAttributeName]
+})
 
 # there are a few problems with constants resolutions
 # on the last MacRuby anyway so just do it simple
@@ -37,6 +42,10 @@ class SlideManager
 
   def previous_slide
     @current_slide -= 1 if @current_slide > 0
+  end
+
+  def current_slide_is_heading?
+    _current_slide.start_with?('# ')
   end
 
   def current_slide
@@ -84,7 +93,8 @@ class SlideView < NSView
     cicontext.drawImage(@renderCache, inRect:bounds, fromRect:@boundsBeforeResize || bounds)
 
     text = slide_manager.current_slide
-    text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:TEXT_RENDER_ATTRIBUTES)
+    attrs = slide_manager.current_slide_is_heading? ? HEADING_ATTRS : TEXT_ATTRS
+    text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:attrs)
   end
 
   def keyDown(key)
