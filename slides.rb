@@ -6,7 +6,7 @@ framework 'Cocoa'
 here = File.expand_path(File.dirname(__FILE__))
 require File.join(here, 'graphics')
 
-SLIDES = File.expand_path('../slides.md', __FILE__)
+SLIDES = File.expand_path('../slides.rtf', __FILE__)
 
 MARGIN = 20
 
@@ -30,32 +30,30 @@ HEADING_ATTRS = TEXT_ATTRS.merge({
 include MRGraphics
 
 class SlideManager
-  def initialize(slides_file)
-    @slides = File.read(slides_file).split("\n").map(&:strip).reject(&:empty?)
+  def initialize(slides_rtf_file)
+    @slides = NSMutableAttributedString.alloc.initWithPath(slides_rtf_file, documentAttributes:nil)
+    _find_slide_locations
     @current_slide = 0
     @backgrounds = []
   end
 
   def next_slide
-    @current_slide += 1 if @current_slide < @slides.length - 1
+    @current_slide += 1 if @current_slide < @slide_locations.length - 1
   end
 
   def previous_slide
     @current_slide -= 1 if @current_slide > 0
   end
 
-  def current_slide_is_heading?
-    _current_slide.start_with?('# ')
-  end
-
   def current_slide
-    _current_slide[2..-1]
+    text = _current_slide
+    # is it a heading?
+    attrs = text.string.start_with?('# ') ? HEADING_ATTRS : TEXT_ATTRS
+    # get actual content
+    text = text.attributedSubstringFromRange(NSMakeRange(2, text.length - 2))
+    text.addAttributes(attrs, range:NSMakeRange(0, text.length))
+    text
   end
-
-  def _current_slide
-    @slides[@current_slide]
-  end
-  private :_current_slide
 
   def current_background
     @backgrounds[@current_slide % @backgrounds.size]
@@ -63,6 +61,21 @@ class SlideManager
 
   def add_background(&block)
     @backgrounds << block
+  end
+
+  private
+
+  def _current_slide
+    # TODO make MacRuby convert ranges?
+    @slides.attributedSubstringFromRange(@slide_locations[@current_slide])
+  end
+
+  def _find_slide_locations
+    pointer = 0
+    @slide_locations = @slides.string.split("\n").map do |line|
+      start, pointer = pointer, (pointer + line.size + 1)
+      NSMakeRange(start, line.size)
+    end
   end
 end
 
@@ -93,10 +106,7 @@ class SlideView < NSView
     cicontext.drawImage(@renderCache, inRect:bounds, fromRect:@boundsBeforeResize || bounds)
 
     text = slide_manager.current_slide
-    attrs = slide_manager.current_slide_is_heading? ? HEADING_ATTRS : TEXT_ATTRS
-    text = NSMutableAttributedString.alloc.initWithPath(File.expand_path('../test.rtf', __FILE__), documentAttributes:nil)
-    text.addAttributes(attrs, range:NSMakeRange(0, text.length))
-    text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:attrs)
+    text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:nil)
   end
 
   def keyDown(key)
