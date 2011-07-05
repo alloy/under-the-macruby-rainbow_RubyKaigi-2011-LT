@@ -11,13 +11,13 @@ SLIDES = File.expand_path('../slides.md', __FILE__)
 MARGIN = 20
 
 TEXT_ATTRS = {
-  NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200) ||
-                                      NSFont.fontWithName("Helvetica Neue Condensed Black", size:200),
+  #NSFontAttributeName            => NSFont.fontWithName("FedraSansDisStd HeavyCond", size:200) ||
+                                      #NSFont.fontWithName("Helvetica Neue Condensed Black", size:200),
   NSParagraphStyleAttributeName  => NSMutableParagraphStyle.new.tap { |p| p.alignment = NSCenterTextAlignment },
   NSStrokeWidthAttributeName     => -2, # negative value means stroke and fill, i.e. bordered
   NSStrokeColorAttributeName     => NSColor.whiteColor,
   NSForegroundColorAttributeName => NSColor.blackColor,
-  NSShadowAttributeName          => NSShadow.new.tap { |s| s.shadowOffset = NSMakeSize(5, -5); s.shadowBlurRadius = 5 }
+  NSShadowAttributeName          => NSShadow.new.tap { |s| s.shadowOffset = NSMakeSize(0, -5); s.shadowBlurRadius = 5 }
 }
 
 HEADING_ATTRS = TEXT_ATTRS.merge({
@@ -94,6 +94,8 @@ class SlideView < NSView
 
     text = slide_manager.current_slide
     attrs = slide_manager.current_slide_is_heading? ? HEADING_ATTRS : TEXT_ATTRS
+    text = NSMutableAttributedString.alloc.initWithPath(File.expand_path('../test.rtf', __FILE__), documentAttributes:nil)
+    text.addAttributes(attrs, range:NSMakeRange(0, text.length))
     text.drawInRect(NSInsetRect(bounds, MARGIN, MARGIN), withAttributes:attrs)
   end
 
