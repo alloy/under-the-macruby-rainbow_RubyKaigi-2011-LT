@@ -204,6 +204,97 @@ slide_manager.add_background do
   end
 end
 
+HERE = File.expand_path("../examples", __FILE__)
+slide_manager.add_background do
+  c = self
+  c.background(Color.random)
+
+  # load images and grab colors
+  img = Image.new(File.join(HERE, 'images', 'italy.jpg')).saturation(1.9)
+  red_colors = img.colors(100)
+  img = Image.new(File.join(HERE, 'images', 'v2.jpg')).saturation(1.9)
+  blue_colors = img.colors(100)
+
+  # create flower head shape
+  head = Path.new.oval(0,0,10,10,:center)
+  petals = 3
+  petals.times do
+    head.rotate(360/petals)
+    head.oval(0,10,5,5,:center)
+    head.oval(0,17,2,2,:center)
+  end
+  # randomize head attributes
+  head.randomize(:fill, red_colors)
+  head.randomize(:stroke, blue_colors)
+  head.randomize(:scale, 0.2..2.0)
+  head.randomize(:rotation, 0..360)
+
+  # create particles
+  numparticles = 200
+  numframes    = 200
+  particles    = []
+  numparticles.times do |i|
+    # start particle at random point at bottom of canvas
+    x = MRGraphics.random(c.width/2 - 50, c.width/2 + 50)
+    p = Particle.new(x,0)
+    p.velocity_x = MRGraphics.random(-0.5,0.5) # set initial x velocity
+    p.velocity_y = MRGraphics.random(1.0,3.0) # set initial y velocity
+    p.acceleration = 0.1 # set drag or acceleration
+    particles[i] = p # add particle to array
+  end
+
+  # animate particles
+  numframes.times do |frame|
+    numparticles.times do |i|
+      particles[i].move
+    end
+  end
+
+  # draw particle trails and heads
+  numparticles.times do |i|
+    c.push
+    # choose a stem color
+    color = MRGraphics.choose(blue_colors).a(0.7).analog(20,0.7)
+    c.stroke(color)
+    c.stroke_width(MRGraphics.random(0.5,2.0))
+
+    # draw the particle
+    particles[i].draw(c)
+
+    # go to the last particle position and draw the flower head
+    c.translate(particles[i].points[-1][0],particles[i].points[-1][1])
+    c.draw(head)
+    c.pop
+  end
+end
+
+slide_manager.add_background do
+  canvas = self
+
+  # choose a random color and set the background to a darker variant
+  clr = Color.random.a(0.5)
+  canvas.background(clr.copy.darken(0.6))
+
+  # create a new rope with 200 fibers
+  rope = Rope.new(canvas, :width => 100, :fibers => 50, :stroke_width => 0.4, :roundness => 3.0)
+
+  # randomly rotate the canvas from its center
+  canvas.translate(canvas.width/2, canvas.height/2)
+  canvas.rotate(MRGraphics.random(0, 360))
+  canvas.translate(-canvas.width/2, -canvas.height/2)
+
+  # draw 20 ropes
+  ropes = 10
+  ropes.times do
+    canvas.stroke(clr.copy.analog(20, 0.8)) # rotate hue up to 20 deg left/right, vary brightness/saturation by up to 70%
+    rope.x0 = -100 # start rope off bottom left of canvas
+    rope.y0 = -100
+    rope.x1 = canvas.width + 100 # end rope off top right of canvas
+    rope.y1 = canvas.height + 100
+    rope.hair # draw rope in organic ‚Äúhair‚Äù style
+  end
+end
+
 frame = NSScreen.mainScreen.visibleFrame
 app = NSApplication.sharedApplication
 app.setActivationPolicy NSApplicationActivationPolicyRegular
