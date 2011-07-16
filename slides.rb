@@ -92,6 +92,11 @@ class SlideView < NSView
     super
   end
 
+  KITTEH_PICTURES = Dir.glob(File.expand_path('../kittehs/*.*', __FILE__)).map { |path| Image.new(path) }
+  def kittehPicture
+    KITTEH_PICTURES[rand(KITTEH_PICTURES.size)]
+  end
+
   # As a simple way to support smooth resizing we cache the result image and
   # draw it scaled to the current bounds.
   def drawRect(rect)
@@ -99,6 +104,9 @@ class SlideView < NSView
       Canvas.for_rendering(:size => bounds.size) do |c|
         CGContextSetTextMatrix(c.ctx, CGAffineTransformIdentity)
         c.instance_eval(&slide_manager.current_background)
+        c.reset
+        kittehPicture.draw(c.ctx, 50, 50, 200, 200)
+        kittehPicture.draw(c.ctx, bounds.size.width - 250, 50, 200, 200)
         @renderCache = c.ciimage
       end
     end
