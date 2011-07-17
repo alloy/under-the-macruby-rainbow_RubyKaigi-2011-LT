@@ -66,7 +66,6 @@ class SlideManager
   private
 
   def _current_slide
-    # TODO make MacRuby convert ranges?
     @slides.attributedSubstringFromRange(@slide_locations[@current_slide])
   end
 
