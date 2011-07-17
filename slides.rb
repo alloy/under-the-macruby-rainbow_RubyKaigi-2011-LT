@@ -212,16 +212,11 @@ slide_manager.add_background do
   end
 end
 
-HERE = File.expand_path("../examples", __FILE__)
+red_colors = nil
+blue_colors = nil
 slide_manager.add_background do
   c = self
   c.background(Color.random)
-
-  # load images and grab colors
-  img = Image.new(File.join(HERE, 'images', 'italy.jpg')).saturation(1.9)
-  red_colors = img.colors(100)
-  img = Image.new(File.join(HERE, 'images', 'v2.jpg')).saturation(1.9)
-  blue_colors = img.colors(100)
 
   # create flower head shape
   head = Path.new.oval(0,0,10,10,:center)
@@ -284,7 +279,7 @@ slide_manager.add_background do
   canvas.background(clr.copy.darken(0.6))
 
   # create a new rope with 200 fibers
-  rope = Rope.new(canvas, :width => 100, :fibers => 50, :stroke_width => 0.4, :roundness => 3.0)
+  rope = Rope.new(canvas, :width => 100, :fibers => 30, :stroke_width => 0.4, :roundness => 3.0)
 
   # randomly rotate the canvas from its center
   canvas.translate(canvas.width/2, canvas.height/2)
@@ -320,5 +315,12 @@ window.center
 window.display
 window.makeKeyAndOrderFront(nil)
 window.orderFrontRegardless
+
+# load images and grab colors
+HERE = File.expand_path("../examples", __FILE__)
+img = Image.new(File.join(HERE, 'images', 'italy.jpg')).saturation(1.9)
+red_colors = img.colors(100)
+img = Image.new(File.join(HERE, 'images', 'v2.jpg')).saturation(1.9)
+blue_colors = img.colors(100)
 
 app.run
